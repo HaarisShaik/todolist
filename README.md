@@ -5,3 +5,5 @@
     - GET todo route
 - when the Add button is pressed call the POST endpoint to create a new todo and refetch the list to update the items.
     - POST todo route
+- add button on frontend to mark task completed
+- add endpoint in the backend to mark a task completed
