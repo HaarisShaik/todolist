@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const newTaskInput = document.getElementById('new-task-input');
     const addTaskBtn = document.getElementById('add-task-btn');
 
-    const API_BASE_URL = '/todos'; // Assuming backend is on the same host
+    const API_BASE_URL = 'http://localhost:5207/todos'; // Assuming backend is on the same host
 
     async function fetchTodos() {
         try {
