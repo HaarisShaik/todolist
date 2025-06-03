@@ -7,3 +7,8 @@
     - POST todo route
 - add button on frontend to mark task completed
 - add endpoint in the backend to mark a task completed
+
+## React frontend
+- to run `cd my-app`
+    - `npm install`
+    - `npm start`
