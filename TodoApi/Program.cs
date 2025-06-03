@@ -1,16 +1,21 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddSingleton(new TodoRepository());
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddDbContext<DataContext>(c => c.UseSqlite("Data Source=TodoList.db"));
 
 var app = builder.Build();
 
 app.MapGet("/", () => "Hello Shaik!");
 app.MapGet("/michael", () => "Hello Micky!");
+
+using (var scope = app.Services.CreateScope()) {
+    scope.ServiceProvider.GetService<DataContext>()!.Database.EnsureCreated();
+}
 
 app.UseCors(a => a.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 app.UseSwagger();
@@ -23,61 +28,76 @@ app.MapControllers();
 app.Run();
 
 
-public struct TodoItem
+public class TodoItem
 {
+    public int Id { get; set; }
     public string Text { get; set; }
 }
 
-public class TodoRepository
+public class DataContext: DbContext
 {
-    private IList<TodoItem> Todos { get; set; } = new List<TodoItem>();
-
-    public IList<TodoItem> GetTodos()
+    public DataContext(DbContextOptions<DataContext> dbContextOptions) : base(dbContextOptions) {}
+    public DbSet<TodoItem> TodoItems { get; set; }
+    
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        return Todos.ToList();
-    }
-
-    public void AddTodo(TodoItem todo)
-    {
-        Todos.Add(todo);
-    }
-
-    public void CompleteTodo(string text)
-    {
-        Todos.Remove(new TodoItem() { Text = text });
+        modelBuilder.Entity<TodoItem>()
+            .HasKey(e => e.Id);
+        
+        modelBuilder.Entity<TodoItem>()
+            .Property(b => b.Id)
+            .ValueGeneratedOnAdd();
     }
 }
 
 [ApiController]
 public class TodoController : ControllerBase
 {
-    public TodoController(TodoRepository todoRepository)
+    public TodoController(DataContext dataContext)
     {
-        TodoRepository = todoRepository;
+        DataContext = dataContext;
     }
 
-    private TodoRepository TodoRepository { get; }
+    private DataContext DataContext { get; }
+
 
     [HttpGet]
     [Route("todo")]
     public ActionResult<IList<TodoItem>> GetTodos()
     {
-        return Ok(TodoRepository.GetTodos());
+        return Ok(DataContext.TodoItems.ToList());
     }
 
     [HttpPost]
     [Route("todo")]
-    public ActionResult PostTodo([FromBody] TodoItem todoItem, CancellationToken cancellationToken)
+    public ActionResult PostTodo([FromBody] AddTodoDto todoItem, CancellationToken cancellationToken)
     {
-        TodoRepository.AddTodo(todoItem);
+        DataContext.TodoItems.Add(new TodoItem() { Text = todoItem.Text});
+        DataContext.SaveChanges();
         return Ok();
     }
 
     [HttpDelete]
     [Route("todo")]
-    public ActionResult DeleteTodo([FromBody] TodoItem todoItem)
+    public ActionResult DeleteTodo([FromBody] DeleteTodoDto todo)
     {
-        TodoRepository.CompleteTodo(todoItem.Text);
+        var item = DataContext.TodoItems.SingleOrDefault(t => t.Id == todo.Id);
+        if (item == null)
+        {
+            return NoContent();
+        }
+        DataContext.TodoItems.Remove(item);
+        DataContext.SaveChanges();
         return Ok();
     }
+}
+
+public class AddTodoDto
+{
+    public string Text { get; set; }
+}
+
+public class DeleteTodoDto
+{
+    public int Id { get; set; }
 }

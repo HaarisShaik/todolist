@@ -1,3 +1,5 @@
 TodoApi/obj/*
 TodoApi/bin/*
 TodoApi/.idea/*
+TodoApi/TodoList.db
+my-app/node-modules
