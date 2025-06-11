@@ -56,15 +56,6 @@ fetch('http://localhost:5000/todo', {
   body: JSON.stringify({ text: taskText }) // Send the task as JSON
 })
 .then(response => {
-  if (!response.ok) {
-    throw new Error("Failed to save task");
-  }
-})
-.catch(error => {
-  console.error("Error saving task:", error);
-});
-
-
   const li = document.createElement("li");
   li.textContent = taskText;
 
@@ -81,5 +72,15 @@ fetch('http://localhost:5000/todo', {
   document.getElementById("taskList").appendChild(li);
 
   taskInput.value = "";
+  if (!response.ok) {
+    throw new Error("Failed to save task");
+  }
+})
+.catch(error => {
+  console.error("Error saving task:", error);
+});
+
+
+  
 }
 
